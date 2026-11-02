@@ -15,21 +15,15 @@ jobs:
           # Устанавливаем zstd на всякий случай
           sudo apt-get update && sudo apt-get install -y zstd
           
-          # Скачиваем SDK
+          # Скачиваем официальный SDK
           wget https://downloads.openwrt.org/snapshots/targets/ramips/mt7621/openwrt-sdk-ramips-mt7621_gcc-14.4.0_musl.Linux-x86_64.tar.zst
           
-          # Выводим список файлов ДО распаковки, чтобы убедиться, что архив скачался
-          ls -la
+          # Распаковываем архив
+          tar --use-compress-program=unzstd -xf openwrt-sdk-ramips-mt7621_gcc-14.4.0_musl.Linux-x86_64.tar.zst
           
-          # Пытаемся распаковать через zstd и tar (раздельно)
-          zstd -d openwrt-sdk-ramips-mt7621_gcc-14.4.0_musl.Linux-x86_64.tar.zst -o sdk.tar
-          tar -xf sdk.tar
+          # Переименовываем ТОЛЬКО папку (указываем точное имя без *)
+          mv openwrt-sdk-ramips-mt7621_gcc-14.4.0_musl.Linux-x86_64 sdk
           
-          # Выводим список файлов ПОСЛЕ распаковки, чтобы увидеть имя папки
-          ls -la
-          
-          # Переименовываем папку (если она называется иначе, мы это увидим)
-          mv openwrt-sdk-* sdk
           cd sdk
           
           # Подключаем исходники из вашего репозитория
