@@ -1,0 +1,41 @@
+name: Build AWG Go
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Download SDK and Build
+        run: |
+          # Скачиваем официальный SDK для ramips/mt7621 (SNAPSHOT)
+          wget https://downloads.openwrt.org/snapshots/targets/ramips/mt7621/openwrt-sdk-ramips-mt7621_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+          tar --use-compress-program=unzstd -xf openwrt-sdk-ramips-mt7621_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+          mv openwrt-sdk-* sdk
+          cd sdk
+          
+          # Подключаем исходники из вашего репозитория
+          echo "src-link custom ${{ github.workspace }}" > feeds.conf
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+          
+          # Выбираем только нужные пакеты (Go-версию)
+          echo "CONFIG_PACKAGE_amneziawg-go=y" > .config
+          echo "CONFIG_PACKAGE_amneziawg-tools=y" >> .config
+          echo "CONFIG_PACKAGE_luci-proto-amneziawg=y" >> .config
+          make defconfig
+          
+          # Компилируем
+          make package/amneziawg-go/compile V=s
+          make package/amneziawg-tools/compile V=s
+          make package/luci-proto-amneziawg/compile V=s
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: awg-go-packages
+          path: sdk/bin/packages/*/custom/*.ipk
